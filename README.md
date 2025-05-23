@@ -40,15 +40,13 @@ config.py
 
 cd (шлях до скрипта), наприклад, cd C:\Scripts\Pharos
 
-Якщо скрипт не на диску C:, тоді спочатку D: або Е:, а вже потім 
-
-cd D:\Scripts\Pharos
+Якщо скрипт не на диску C:, тоді спочатку D: або Е:, а вже потім  cd D:\Scripts\Pharos
 
 Потім по одній стрічці, не все разом:
 
 python -m venv venv
 
-venv\Scripts\activate
+.\venv\Scripts\activate
 
 pip install --upgrade pip
 
@@ -61,7 +59,7 @@ python main.py
 
 Спочатку згенеруйте юзерагенти (буде створений файл гаманець-юзерагент) - data/user_agents
 
-Для статистики використовується файл - data/stats
+Для статистики використовується файл - data/stats.txt
 
 Після вибору меню "All in" буде створений ще один файл data/all_in, куди будуть записуватися всі активності по кожному гаманцю.
 
