@@ -5,6 +5,9 @@ from web3 import Web3, HTTPProvider
 from eth_account import Account
 from eth_abi import encode
 from config import RPC
+from core.auth import get_jwt_token
+from core.verify import verify_task
+from core.verify_retry import retry_verify_task
 
 TOKENS = {
     "PHRS": None,
@@ -58,7 +61,7 @@ def approve_if_needed(w3: Web3, account: Account, token_address: str, amount: in
         })
         signed = account.sign_transaction(tx)
         tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
-        w3.eth.wait_for_transaction_receipt(tx_hash)  # чекати підтвердження!
+        w3.eth.wait_for_transaction_receipt(tx_hash)
         print("[Approve] Done")
 
 
@@ -98,13 +101,11 @@ async def swap_phrs_to_usdc(private_key: str, proxy: str = None):
         print(f"[Wrap] PHRS → WPHRS для {address}")
         await asyncio.sleep(3)
 
-        # Approve if needed (чекає підтвердження в самій функції)
+        # Approve if needed
         approve_if_needed(w3, account, TOKENS["WPHRS"], amount_wei)
 
-        # Важливо! після approve — nonce оновлюємо ще раз
         nonce = w3.eth.get_transaction_count(address, 'pending')
 
-        # Swap via multicall
         router = w3.eth.contract(address=ROUTER, abi=ROUTER_ABI)
         encoded = encode(
             ["address", "address", "uint24", "address", "uint256", "uint256", "uint160"],
@@ -116,13 +117,18 @@ async def swap_phrs_to_usdc(private_key: str, proxy: str = None):
             int(time.time()), [payload]
         ).build_transaction({
             "from": address,
-            "nonce": nonce,  # тут теж актуальний nonce!
+            "nonce": nonce,
             "gas": 300000,
             "gasPrice": 0
         })
         signed2 = account.sign_transaction(tx2)
         tx_hash_2 = w3.eth.send_raw_transaction(signed2.raw_transaction)
         w3.eth.wait_for_transaction_receipt(tx_hash_2)
+
+        # ✅ verify_task XP
+        jwt = get_jwt_token(private_key, proxy)
+        if jwt:
+            await retry_verify_task(address, w3.to_hex(tx_hash_2), jwt, proxy)
 
         print(f"[Swap ✅] Виконано свап для {address}, TX: {w3.to_hex(tx_hash_2)}, сума: {amount_eth} PHRS")
         return True

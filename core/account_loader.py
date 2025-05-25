@@ -27,17 +27,21 @@ def load_private_keys() -> List[str]:
         return [line.strip() for line in f if line.strip()]
 
 
-def load_proxies() -> List[str]:
+def load_proxies() -> List[str | None]:
     with open(PROXIES_FILE, "r") as f:
         proxies = []
         for line in f:
-            parts = line.strip().split(":")
-            if len(parts) == 4:
-                ip, port, user, pwd = parts
-                proxies.append(f"http://{user}:{pwd}@{ip}:{port}")
+            raw = line.strip()
+            if not raw or raw.lower() == "none":
+                proxies.append(None)  # для пустих або "None"
+            elif raw.count(":") == 3:
+                ip, port, user, pwd = raw.split(":")
+                proxy_url = f"http://{user}:{pwd}@{ip}:{port}"
+                proxies.append(proxy_url)
             else:
-                proxies.append(line.strip())  # fallback, якщо формат вже правильний
+                proxies.append(raw)
         return proxies
+
 
 
 def load_user_agents() -> Dict[str, str]:

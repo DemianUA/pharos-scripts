@@ -5,6 +5,8 @@ from web3 import Web3, HTTPProvider
 from eth_account import Account
 from eth_abi import encode
 from config import RPC
+from core.auth import get_jwt_token
+from core.verify_retry import retry_verify_task
 
 TOKENS = {
     "PHRS": None,
@@ -56,7 +58,7 @@ def approve_if_needed(w3: Web3, account: Account, token_address: str, amount: in
         })
         signed = account.sign_transaction(tx)
         tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
-        w3.eth.wait_for_transaction_receipt(tx_hash)  # чекати receipt!
+        w3.eth.wait_for_transaction_receipt(tx_hash)
         print("[Approve] Done")
 
 async def swap_usdc_to_phrs(private_key: str, proxy: str = None):
@@ -75,12 +77,9 @@ async def swap_usdc_to_phrs(private_key: str, proxy: str = None):
             print(msg)
             return msg
 
-        # 1. Approve USDC
         approve_if_needed(w3, account, TOKENS["USDC"], amount_wei)
-        # 2. Оновити nonce після approve
         nonce = w3.eth.get_transaction_count(address, 'pending')
 
-        # 3. Swap USDC → WPHRS через multicall
         router = w3.eth.contract(address=ROUTER, abi=ROUTER_ABI)
         encoded = encode(
             ["address", "address", "uint24", "address", "uint256", "uint256", "uint160"],
@@ -97,10 +96,9 @@ async def swap_usdc_to_phrs(private_key: str, proxy: str = None):
         signed_tx = account.sign_transaction(tx)
         tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
         w3.eth.wait_for_transaction_receipt(tx_hash)
-
         await asyncio.sleep(2)
 
-        # 4. Unwrap WPHRS → PHRS
+        # Unwrap WPHRS → PHRS
         unwrap_contract = w3.eth.contract(address=TOKENS["WPHRS"], abi=[{
             "inputs": [{"internalType": "uint256", "name": "amount", "type": "uint256"}],
             "name": "withdraw",
@@ -108,8 +106,6 @@ async def swap_usdc_to_phrs(private_key: str, proxy: str = None):
             "stateMutability": "nonpayable",
             "type": "function"
         }])
-
-        # nonce для unwrap — ще раз оновити
         unwrap_nonce = w3.eth.get_transaction_count(address, 'pending')
         tx2 = unwrap_contract.functions.withdraw(amount_wei).build_transaction({
             "from": address,
@@ -120,6 +116,11 @@ async def swap_usdc_to_phrs(private_key: str, proxy: str = None):
         signed2 = account.sign_transaction(tx2)
         unwrap_hash = w3.eth.send_raw_transaction(signed2.raw_transaction)
         w3.eth.wait_for_transaction_receipt(unwrap_hash)
+
+        # ✅ Підтвердження дії (verify_task)
+        jwt = get_jwt_token(private_key, proxy)
+        if jwt:
+            await retry_verify_task(address, w3.to_hex(unwrap_hash), jwt, proxy)
 
         print(f"[Swap ✅] USDC → PHRS → {address}, TX: {w3.to_hex(unwrap_hash)}, сума: {amount} USDC")
         return True
