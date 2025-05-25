@@ -83,21 +83,31 @@ async def run_actions_for_wallet(acc, actions_plan, stats, date_key):
     wallet_key = get_wallet_key(acc)
     for action in actions_plan:
         try:
-            result = await ACTION_FUNCS[action](acc.private_key, acc.proxy)
+            if action == "checkin":
+                result = await asyncio.to_thread(ACTION_FUNCS[action], acc.private_key, acc.proxy)
+            else:
+                result = await ACTION_FUNCS[action](acc.private_key, acc.proxy)
+
             if result:
                 print(result)
+
         except Exception as e:
             print(f"[{wallet_key}] ❌ Помилка при виконанні {action}: {e}")
+
         if wallet_key not in stats[date_key]:
             stats[date_key][wallet_key] = {}
+
         if action == "checkin":
             stats[date_key][wallet_key][action] = True
         else:
             stats[date_key][wallet_key][action] = stats[date_key][wallet_key].get(action, 0) + 1
+
         save_all_in_stats(stats)
+
         delay = random.randint(*DELAY_BETWEEN_ACTIONS)
         print(f"[{wallet_key}] Затримка між діями: {delay}с")
         await asyncio.sleep(delay)
+
 
 
 async def run_wallet_with_delay(acc, actions_plan, stats, date_key, delay, idx):

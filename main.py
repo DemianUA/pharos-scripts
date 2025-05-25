@@ -26,7 +26,12 @@ from core.all_in import run_all_in
 async def retry_action(action_func, *args):
     for attempt in range(RETRIES_PER_ACTION):
         try:
-            result = await action_func(*args)
+            # 🔄 Якщо функція не async — запускати в окремому потоці
+            if asyncio.iscoroutinefunction(action_func):
+                result = await action_func(*args)
+            else:
+                result = await asyncio.to_thread(action_func, *args)
+
             if result:
                 short_wallet = args[0][-8:] if args and isinstance(args[0], str) else ""
                 print(f"[{short_wallet}] {result}")
@@ -80,12 +85,10 @@ async def main():
             print("👋 До зустрічі!")
             break
 
-
         elif choice == "1":
             accounts = load_accounts()
             await run_all_in(accounts)
             continue
-
 
         elif choice == "2":
             while True:
@@ -119,21 +122,14 @@ async def main():
                     print(f"⏳ Затримка між акаунтами: {delay}с")
                     await asyncio.sleep(delay)
 
-
         elif choice == "3":
-
             accounts = load_accounts()
-
             if RANDOMIZE_WALLETS_ORDER:
                 random.shuffle(accounts)
-
             for acc in accounts:
                 await handle_account(acc, "checkin")
-
                 delay = random.randint(*DELAY_BETWEEN_WALLETS)
-
                 print(f"⏳ Затримка між акаунтами: {delay}с")
-
                 await asyncio.sleep(delay)
 
         elif choice == "4":
