@@ -91,7 +91,7 @@ async def swap_usdc_to_phrs(private_key: str, proxy: str = None):
             "from": address,
             "nonce": nonce,
             "gas": 300000,
-            "gasPrice": 0
+            "gasPrice": Web3.to_wei("1", "gwei")
         })
         signed_tx = account.sign_transaction(tx)
         tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
@@ -111,7 +111,7 @@ async def swap_usdc_to_phrs(private_key: str, proxy: str = None):
             "from": address,
             "nonce": unwrap_nonce,
             "gas": 100000,
-            "gasPrice": 0
+            "gasPrice": Web3.to_wei("1", "gwei")
         })
         signed2 = account.sign_transaction(tx2)
         unwrap_hash = w3.eth.send_raw_transaction(signed2.raw_transaction)

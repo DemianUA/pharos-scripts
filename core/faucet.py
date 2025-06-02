@@ -47,13 +47,17 @@ def claim_faucet(private_key, proxy, user_agent):
         return False
 
     claim_url = f"https://api.pharosnetwork.xyz/faucet/daily?address={address}"
-    r = session.post(claim_url, headers=headers)
-    res = r.json()
-    if res.get("code") == 0:
-        print("[+] Faucet claimed successfully!")
-        return True
-    else:
-        print("[!] Faucet claim failed", res)
+    try:
+        r = session.post(claim_url, headers=headers)
+        res = r.json()
+        if res.get("code") == 0:
+            print("[+] Faucet claimed successfully!")
+            return True
+        else:
+            print("[!] Faucet claim failed", res)
+            return False
+    except Exception:
+        print(f"[!] Faucet claim failed — не JSON відповідь: {r.status_code} → {r.text[:100]}")
         return False
 
 

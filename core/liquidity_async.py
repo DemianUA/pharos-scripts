@@ -47,7 +47,7 @@ async def approve_if_needed(w3: Web3, account: Account, token_address: str, amou
             "from": account.address,
             "nonce": await asyncio.to_thread(w3.eth.get_transaction_count, account.address, 'pending'),
             "gas": 100000,
-            "gasPrice": 0
+            "gasPrice": Web3.to_wei("1", "gwei")
         })
         signed_tx = account.sign_transaction(tx)
         tx_hash = await asyncio.to_thread(w3.eth.send_raw_transaction, signed_tx.raw_transaction)
@@ -96,7 +96,7 @@ async def add_liquidity_phrs_usdc(private_key: str, proxy: str):
         "value": amount_wei,
         "nonce": await asyncio.to_thread(w3.eth.get_transaction_count, address, 'pending'),
         "gas": 100000,
-        "gasPrice": 0
+        "gasPrice": Web3.to_wei("1", "gwei")
     })
     signed = account.sign_transaction(tx)
     tx_hash_wrap = await asyncio.to_thread(w3.eth.send_raw_transaction, signed.raw_transaction)
@@ -126,7 +126,7 @@ async def add_liquidity_phrs_usdc(private_key: str, proxy: str):
         "from": address,
         "nonce": nonce_after_approve,
         "gas": 600000,
-        "gasPrice": 0,
+        "gasPrice": Web3.to_wei("1", "gwei"),
         "value": 0
     })
     signed2 = account.sign_transaction(tx2)

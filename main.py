@@ -2,6 +2,8 @@ import random
 import asyncio
 import json
 from eth_account import Account
+from core.mint_nft import mint_nft
+
 
 from config import (
     RETRIES_PER_ACTION,
@@ -98,8 +100,8 @@ async def main():
                 print("3. 💸 Відправити PHRS самому собі")
                 print("4. 🧱 Деплой смартконтракту Timer")
                 print("5. 💧 Додати ліквідність у пул PHRS-USDC")
+                print("6. 🖼️ Мінт NFT")
                 print("0. 🔙 Назад")
-
                 sub_choice = input("Оберіть дію: ")
 
                 if sub_choice == "0":
@@ -117,6 +119,8 @@ async def main():
                         break
                     elif sub_choice == "5":
                         await retry_action(add_liquidity_phrs_usdc, acc.private_key, acc.proxy)
+                    elif sub_choice == "6":
+                        await retry_action(mint_nft, acc.private_key, acc.proxy)
 
                     delay = random.randint(*DELAY_BETWEEN_WALLETS)
                     print(f"⏳ Затримка між акаунтами: {delay}с")

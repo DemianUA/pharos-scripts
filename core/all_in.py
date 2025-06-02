@@ -3,6 +3,7 @@ import json
 import random
 import asyncio
 from datetime import datetime
+from core.mint_nft import mint_nft
 from config import (
     ALL_IN_SETTINGS,
     DELAY_BETWEEN_ACTIONS,
@@ -76,6 +77,7 @@ ACTION_FUNCS = {
     "send_to_self": send_phrs_to_self,
     "add_liquidity": add_liquidity_phrs_usdc,
     "deploy_contract": deploy_timer,
+    "mint_nft": mint_nft,
     "checkin": perform_checkin,
 }
 

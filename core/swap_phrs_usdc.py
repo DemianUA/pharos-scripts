@@ -57,7 +57,7 @@ def approve_if_needed(w3: Web3, account: Account, token_address: str, amount: in
             "from": account.address,
             "nonce": w3.eth.get_transaction_count(account.address, 'pending'),
             "gas": 100000,
-            "gasPrice": 0
+            "gasPrice": Web3.to_wei("1", "gwei")
         })
         signed = account.sign_transaction(tx)
         tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
@@ -93,7 +93,7 @@ async def swap_phrs_to_usdc(private_key: str, proxy: str = None):
             "value": amount_wei,
             "nonce": nonce,
             "gas": 100000,
-            "gasPrice": 0
+            "gasPrice": Web3.to_wei("1", "gwei")
         })
         signed_tx = account.sign_transaction(tx)
         tx_hash_1 = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
@@ -119,7 +119,7 @@ async def swap_phrs_to_usdc(private_key: str, proxy: str = None):
             "from": address,
             "nonce": nonce,
             "gas": 300000,
-            "gasPrice": 0
+            "gasPrice": Web3.to_wei("1", "gwei")
         })
         signed2 = account.sign_transaction(tx2)
         tx_hash_2 = w3.eth.send_raw_transaction(signed2.raw_transaction)
